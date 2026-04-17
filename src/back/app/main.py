@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="EnterOS API", version="0.1.0")
+from app.core.logging import configure_logging
+from app.routers import analysis, auth, metrics, processes
+
+configure_logging()
+
+app = FastAPI(title="EnterOS API", version="0.1.0", docs_url="/docs", redoc_url="/redoc")
 
 app.add_middleware(
     CORSMiddleware,
@@ -11,10 +16,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
+app.include_router(processes.router)
+app.include_router(analysis.router)
+app.include_router(metrics.router)
 
-@app.get("/health")
+
+@app.get("/health", tags=["infra"])
 async def health() -> dict[str, str]:
     return {"status": "ok"}
-
-
-# TODO(DEV-2): registrar routers de auth, processes, analysis, metrics
