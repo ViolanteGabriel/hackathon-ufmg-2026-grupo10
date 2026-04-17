@@ -1,0 +1,69 @@
+@import '../../theme/theme.css';
+
+.executive-monitoring-dashboard {
+  background: rgba(17, 17, 18, 0.92);
+  color: #f3f3f3;
+}
+
+.executive-monitoring-dashboard__kicker {
+  color: #ffb77d;
+}
+
+.executive-monitoring-dashboard__headline {
+  color: #f7f7f7;
+}
+
+.executive-monitoring-dashboard__lede {
+  color: rgba(241, 241, 241, 0.72);
+}
+
+.executive-monitoring-dashboard__stats {
+  margin-top: 28px;
+}
+
+.executive-monitoring-dashboard__stat-card {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f3f3f3;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.executive-monitoring-dashboard__stat-card--accent {
+  background: linear-gradient(135deg, var(--primary), var(--primary-soft));
+  color: white;
+}
+
+.executive-monitoring-dashboard__stat-head {
+  margin-bottom: 10px;
+}
+
+.executive-monitoring-dashboard__stat-icon {
+  color: #bdbdbd;
+}
+
+.executive-monitoring-dashboard__stat-icon--accent {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.executive-monitoring-dashboard__note {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffb77d;
+}
+
+.executive-monitoring-dashboard__note--accent {
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+}
+
+.executive-monitoring-dashboard__stat-label--accent {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.executive-monitoring-dashboard__stat-value {
+  color: inherit;
+}
+
+@media (max-width: 760px) {
+  .executive-monitoring-dashboard__stats {
+    margin-top: 20px;
+  }
+}

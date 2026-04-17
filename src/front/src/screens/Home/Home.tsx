@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../../modules/ui/Icon';
+import { ExecutiveMonitoringDashboard } from '../../modules/ui/ExecutiveMonitoringDashboard/ExecutiveMonitoringDashboard';
 import type { UserRole } from '../../modules/ui/LoginRoleSelector/LoginRoleSelector';
 import './Home.css';
 
@@ -69,52 +70,56 @@ export function Home() {
                 </div>
             </section>
 
-            <div className="hero-grid home-screen__grid">
-                <section className="panel panel-inner home-screen__capabilities">
-                    <div className="section-heading">
-                        <h3 className="section-title">Platform Capabilities</h3>
-                        <Icon name="widgets" />
-                    </div>
+            {userRole === 'Bank Administrator' && <ExecutiveMonitoringDashboard className="home-screen__admin-monitoring" />}
 
-                    <div className="home-screen__capability-list">
-                        {homeCapabilities.map((capability) => (
-                            <article key={capability.title} className="home-screen__capability-item">
-                                <div className="doc-main home-screen__capability-main">
-                                    <div className="doc-icon">
-                                        <Icon name={capability.icon} />
+            {userRole === 'Lawyer' && (
+                <div className="hero-grid home-screen__grid">
+                    <section className="panel panel-inner home-screen__capabilities">
+                        <div className="section-heading">
+                            <h3 className="section-title">Platform Capabilities</h3>
+                            <Icon name="widgets" />
+                        </div>
+
+                        <div className="home-screen__capability-list">
+                            {homeCapabilities.map((capability) => (
+                                <article key={capability.title} className="home-screen__capability-item">
+                                    <div className="doc-main home-screen__capability-main">
+                                        <div className="doc-icon">
+                                            <Icon name={capability.icon} />
+                                        </div>
+                                        <div>
+                                            <h4 className="section-title-strong home-screen__capability-title">{capability.title}</h4>
+                                            <p className="card-text home-screen__capability-copy">{capability.description}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="section-title-strong home-screen__capability-title">{capability.title}</h4>
-                                        <p className="card-text home-screen__capability-copy">{capability.description}</p>
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-                </section>
+                                </article>
+                            ))}
+                        </div>
+                    </section>
 
-                <aside className="panel panel-inner home-screen__flow">
-                    <div className="section-heading">
-                        <h3 className="section-title">Daily Flow</h3>
-                        <Icon name="event_note" />
-                    </div>
+                    <aside className="panel panel-inner home-screen__flow">
+                        <div className="section-heading">
+                            <h3 className="section-title">Daily Flow</h3>
+                            <Icon name="event_note" />
+                        </div>
 
-                    <ol className="home-screen__steps">
-                        {workflowSteps.map((step) => (
-                            <li key={step} className="home-screen__step-item">
-                                <p className="home-screen__step-text">{step}</p>
-                            </li>
-                        ))}
-                    </ol>
+                        <ol className="home-screen__steps">
+                            {workflowSteps.map((step) => (
+                                <li key={step} className="home-screen__step-item">
+                                    <p className="home-screen__step-text">{step}</p>
+                                </li>
+                            ))}
+                        </ol>
 
-                    <div className="glass-card home-screen__support-card">
-                        <h4 className="section-title-strong home-screen__support-title">Navigation Tip</h4>
-                        <p className="muted home-screen__support-copy">
-                            Use the sidebar at any time to switch modules. EnterOS keeps the operational context consistent as you move across screens.
-                        </p>
-                    </div>
-                </aside>
-            </div>
+                        <div className="glass-card home-screen__support-card">
+                            <h4 className="section-title-strong home-screen__support-title">Navigation Tip</h4>
+                            <p className="muted home-screen__support-copy">
+                                Use the sidebar at any time to switch modules. EnterOS keeps the operational context consistent as you move across screens.
+                            </p>
+                        </div>
+                    </aside>
+                </div>
+            )}
         </main>
     );
 }

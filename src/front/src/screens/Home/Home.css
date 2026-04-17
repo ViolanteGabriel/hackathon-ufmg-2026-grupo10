@@ -10,6 +10,10 @@
 	position: relative;
 }
 
+.home-screen__admin-monitoring {
+	margin-top: -2px;
+}
+
 .home-screen__headline {
 	margin-bottom: 0;
 }
