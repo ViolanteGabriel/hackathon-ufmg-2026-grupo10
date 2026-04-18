@@ -279,7 +279,8 @@ hackathon-ufmg-2026-grupo10/
 
 ## Apresentação
 
-Abra `docs/presentation.html` diretamente no browser. Navegue com as setas ← → do teclado.
+- **Vídeo da apresentação:** [youtu.be/to8Uv4QSDXI](https://youtu.be/to8Uv4QSDXI)
+- **Slides:** abra `docs/presentation.html` diretamente no browser e navegue com as setas ← → do teclado.
 
 ---
 
