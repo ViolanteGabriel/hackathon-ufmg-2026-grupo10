@@ -59,7 +59,7 @@ _RAG_TOPICS: dict[str, str] = {
 
 def _load_policy() -> dict[str, Any]:
     try:
-        with open(_POLICY_PATH, "r", encoding="utf-8") as f:
+        with open(_POLICY_PATH, encoding="utf-8") as f:
             return yaml.safe_load(f)
     except Exception as exc:
         logger.warning("Falha ao ler policy.yaml: %s — usando defaults", exc)
