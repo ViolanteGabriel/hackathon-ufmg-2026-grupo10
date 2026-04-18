@@ -279,7 +279,7 @@ input[type="checkbox"] {
   margin: 18px 0 0;
   max-width: 64ch;
   color: var(--text-muted);
-  font-size: 1.05rem;
+  font-size: 0.84rem;
   line-height: 1.7;
 }
 
@@ -547,6 +547,12 @@ input[type="checkbox"] {
 .hero-banner {
   position: relative;
   overflow: hidden;
+}
+
+.panel.panel-inner.hero-banner.dashboard-screen__hero {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .hero-banner::after {

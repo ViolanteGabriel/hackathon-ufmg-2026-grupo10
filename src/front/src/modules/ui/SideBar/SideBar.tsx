@@ -25,8 +25,8 @@ export function SideBar({
 
   const navigationItems = [
     { label: 'Home', icon: 'home', path: '/home' },
-    userRole === 'Lawyer' && { label: 'Evidence Hub', icon: 'upload_file', path: '/upload' },
-    userRole === 'Lawyer' && { label: 'Decision Lab', icon: 'gavel', path: '/processes' },
+    { label: 'Evidence Hub', icon: 'upload_file', path: '/upload' },
+    { label: 'Decision Lab', icon: 'gavel', path: '/processes' },
     userRole === 'Bank Administrator' && { label: 'Monitoring', icon: 'analytics', path: '/monitoring' },
   ];
 

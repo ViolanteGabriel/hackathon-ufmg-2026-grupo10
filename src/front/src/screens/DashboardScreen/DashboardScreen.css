@@ -23,7 +23,21 @@
   min-height: 0;
   height: 100%;
   padding: 16px;
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(144, 77, 0, 0.45) transparent;
+}
+
+.dashboard-screen__hero::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-screen__hero::-webkit-scrollbar-thumb {
+  background: rgba(144, 77, 0, 0.45);
+  border-radius: 999px;
 }
 
 .dashboard-screen__headline {
@@ -34,8 +48,8 @@
 
 .dashboard-screen__lede {
   max-width: 64ch;
-  font-size: 0.89rem;
-  line-height: 1.45;
+  font-size: 0.88rem;
+  line-height: 1.35;
 }
 
 .dashboard-screen__split {
@@ -138,7 +152,8 @@
   .dashboard-screen__hero {
     height: auto;
     padding: 18px;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .dashboard-screen__aside {
@@ -161,11 +176,6 @@
 @media (max-width: 760px) {
   .dashboard-screen__headline {
     font-size: clamp(1.3rem, 5.6vw, 1.9rem);
-  }
-
-  .dashboard-screen__lede {
-    font-size: 0.84rem;
-    line-height: 1.4;
   }
 
   .dashboard-screen__hero,

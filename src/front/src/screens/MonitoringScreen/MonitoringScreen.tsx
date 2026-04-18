@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMetrics, useRecommendations } from '../../api/metrics';
 import { Icon } from '../../modules/ui/Icon';
@@ -9,6 +10,7 @@ const PCT = (v: number) => `${Math.round(v * 100)}%`;
 
 export function MonitoringScreen() {
   const navigate = useNavigate();
+  const [isMatrixFocused, setIsMatrixFocused] = useState(false);
   const { data: metrics, isLoading: metricsLoading } = useMetrics();
   const { data: recommendations, isLoading: recsLoading } = useRecommendations();
 
@@ -22,7 +24,8 @@ export function MonitoringScreen() {
     : statsCards;
 
   return (
-    <main className="screen monitoring-screen">
+    <main className={`screen monitoring-screen ${isMatrixFocused ? 'monitoring-screen--matrix-focus' : ''}`}>
+      {!isMatrixFocused && (
       <div className="monitor-grid monitoring-screen__grid">
         <section className="panel panel-inner hero-banner monitoring-screen__hero">
           <div className="title-kicker monitoring-screen__kicker">Executive Monitoring</div>
@@ -33,19 +36,21 @@ export function MonitoringScreen() {
             Track adherence, savings, and high-risk cases in one control surface.
           </p>
 
-          <div className="split-grid monitoring-screen__stats" style={{ marginTop: 28 }}>
-            {liveCards.map((card, index) => (
-              <article key={card.label} className={`metric-card monitoring-screen__stat-card ${index === 3 ? 'monitoring-screen__stat-card--accent' : ''}`}>
-                <div className="section-heading" style={{ marginBottom: 10 }}>
-                  <Icon name={card.icon} className={index === 3 ? 'monitoring-screen__stat-icon monitoring-screen__stat-icon--accent' : 'monitoring-screen__stat-icon'} />
-                  <span className={`mini-pill monitoring-screen__note ${index === 3 ? 'monitoring-screen__note--accent' : ''}`}>{card.note}</span>
-                </div>
-                <div className={`metric-label ${index === 3 ? 'monitoring-screen__stat-label--accent' : ''}`}>{card.label}</div>
-                <div className="metric-value monitoring-screen__stat-value">
-                  {metricsLoading ? '…' : card.value}
-                </div>
-              </article>
-            ))}
+          <div className="monitoring-screen__stats-scroll" role="region" aria-label="Executive monitoring cards">
+            <div className="monitoring-screen__stats-row">
+              {liveCards.map((card, index) => (
+                <article key={card.label} className={`metric-card monitoring-screen__stat-card ${index === 3 ? 'monitoring-screen__stat-card--accent' : ''}`}>
+                  <div className="section-heading monitoring-screen__stat-head">
+                    <Icon name={card.icon} className={index === 3 ? 'monitoring-screen__stat-icon monitoring-screen__stat-icon--accent' : 'monitoring-screen__stat-icon'} />
+                    <span className={`mini-pill monitoring-screen__note ${index === 3 ? 'monitoring-screen__note--accent' : ''}`}>{card.note}</span>
+                  </div>
+                  <div className={`metric-label ${index === 3 ? 'monitoring-screen__stat-label--accent' : ''}`}>{card.label}</div>
+                  <div className="metric-value monitoring-screen__stat-value">
+                    {metricsLoading ? '…' : card.value}
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -60,7 +65,7 @@ export function MonitoringScreen() {
             </button>
           </div>
 
-          <div className="feed-list">
+          <div className="feed-list monitoring-screen__feed-list">
             {recsLoading && <p className="muted">Loading feed…</p>}
             {recommendations && recommendations.length === 0 && (
               <p className="muted">No recommendations yet. Upload cases to get started.</p>
@@ -98,14 +103,25 @@ export function MonitoringScreen() {
           </div>
         </aside>
       </div>
+      )}
 
-      <section className="panel panel-inner monitoring-screen__table-panel" style={{ marginTop: 24 }}>
+      <section className={`panel panel-inner monitoring-screen__table-panel ${isMatrixFocused ? 'monitoring-screen__table-panel--focused' : ''}`}>
         <div className="section-heading">
           <h3 className="section-title-strong monitoring-screen__table-title">Lawyer Adherence Matrix</h3>
-          <button type="button" className="ghost-button">Export Full Report</button>
+          <div className="monitoring-screen__table-actions">
+            <button type="button" className="ghost-button">Export Full Report</button>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => setIsMatrixFocused((current) => !current)}
+              aria-pressed={isMatrixFocused}
+            >
+              {isMatrixFocused ? 'Mostrar outras seções' : 'Focar matriz'}
+            </button>
+          </div>
         </div>
 
-        <div className="table-wrap">
+        <div className={`table-wrap monitoring-screen__table-wrap ${isMatrixFocused ? 'monitoring-screen__table-wrap--focused' : ''}`}>
           <table className="data-table monitoring-screen__table">
             <thead>
               <tr>

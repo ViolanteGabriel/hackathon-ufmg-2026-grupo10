@@ -57,11 +57,6 @@ export function LoginScreen() {
           <h1 className="headline login-screen__headline">
             EnterOS <span className="accent">Enterprise Legal Operations</span>
           </h1>
-          <p className="lede login-screen__lede">
-            Access the case workspace, load autos and subsídios, then inspect the AI recommendation before making a decision.
-            <br />
-            <small style={{ opacity: 0.7 }}>Demo: advogado@banco.com / advogado123 | banco@banco.com / banco123</small>
-          </p>
         </div>
 
         <section className="login-card login-screen__card">

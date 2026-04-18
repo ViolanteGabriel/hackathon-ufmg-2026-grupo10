@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAnalysis, useProcesso, useRegisterDecision, useAnalyzeProcesso } from '../../api/processes';
 import { Icon } from '../../modules/ui/Icon';
@@ -55,6 +55,8 @@ function ConfidenceRing({ value, label, color }: RingProps) {
 export function DashboardScreen() {
   const { processoId } = useParams<{ processoId: string }>();
   const navigate = useNavigate();
+
+  const isAdmin = useMemo(() => window.localStorage.getItem('enteros-role') === 'Bank Administrator', []);
 
   const [adjusting, setAdjusting] = useState(false);
   const [adjustValue, setAdjustValue] = useState('');
@@ -166,7 +168,7 @@ export function DashboardScreen() {
             </div>
           )}
 
-          <p className="lede dashboard-screen__lede" style={{ marginTop: 8 }}>
+          <p className="dashboard-screen__lede" style={{ marginTop: 8 }}>
             {analysis.rationale.split('\n\n')[0]}
           </p>
 
@@ -227,9 +229,11 @@ export function DashboardScreen() {
             <div className="glass-card" style={{ marginTop: 14, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'center' }}>
               <Icon name="check_circle" />
               <span style={{ fontWeight: 600 }}>Decisão registrada com sucesso.</span>
-              <button className="ghost-button" style={{ marginLeft: 'auto' }} onClick={() => navigate('/monitoring')}>
-                Ver Monitoring
-              </button>
+              {isAdmin && (
+                <button className="ghost-button" style={{ marginLeft: 'auto' }} onClick={() => navigate('/monitoring')}>
+                  Ver Monitoring
+                </button>
+              )}
             </div>
           ) : adjusting ? (
             <div className="glass-card" style={{ marginTop: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -356,9 +360,11 @@ export function DashboardScreen() {
       <section className="panel panel-inner dashboard-screen__risk">
         <div className="section-heading">
           <h3 className="section-title">Fatores da Análise</h3>
-          <button type="button" className="ghost-button" onClick={() => navigate('/monitoring')}>
-            Ver Monitoring
-          </button>
+          {isAdmin && (
+            <button type="button" className="ghost-button" onClick={() => navigate('/monitoring')}>
+              Ver Monitoring
+            </button>
+          )}
         </div>
 
         <div className="insight-grid dashboard-screen__rings" style={{ alignItems: 'start' }}>
