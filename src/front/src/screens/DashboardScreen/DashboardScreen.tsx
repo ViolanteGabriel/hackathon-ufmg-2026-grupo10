@@ -93,7 +93,7 @@ export function DashboardScreen() {
           <p className="muted">
             Nenhum processo selecionado.{' '}
             <button className="ghost-button" onClick={() => navigate('/upload')}>
-              Ir para Evidence Hub
+Ir para Central de Evidências
             </button>
           </p>
         </div>
@@ -151,7 +151,7 @@ export function DashboardScreen() {
 
         {/* ── Painel principal — recomendação ── */}
         <section className="panel panel-inner hero-banner dashboard-screen__hero">
-          <div className="title-kicker">AI Analysis Outcome</div>
+          <div className="title-kicker">Resultado da análise de IA</div>
           <h1 className="headline dashboard-screen__headline">
             Recomendação:{' '}
             <span style={{ color: accentColor }}>
@@ -231,7 +231,7 @@ export function DashboardScreen() {
               <span style={{ fontWeight: 600 }}>Decisão registrada com sucesso.</span>
               {isAdmin && (
                 <button className="ghost-button" style={{ marginLeft: 'auto' }} onClick={() => navigate('/monitoring')}>
-                  Ver Monitoring
+                  Ver monitoramento
                 </button>
               )}
             </div>
@@ -362,7 +362,7 @@ export function DashboardScreen() {
           <h3 className="section-title">Fatores da Análise</h3>
           {isAdmin && (
             <button type="button" className="ghost-button" onClick={() => navigate('/monitoring')}>
-              Ver Monitoring
+              Ver monitoramento
             </button>
           )}
         </div>
