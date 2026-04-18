@@ -168,7 +168,7 @@ def _build_rationale(
 
     head = (
         f"RN1 estimou probabilidade de derrota em {prob_derrota:.1%}, "
-        f"{'acima' if decisao == 'ACORDO' else 'abaixo'} do limiar de {threshold:.0%}. "
+        f"{'acima' if prob_derrota > threshold else 'abaixo'} do limiar de {threshold:.0%}. "
         f"Processo: UF={uf}, sub-assunto={sub}, valor={valor}. "
         f"Subsídios presentes: {', '.join(docs_presentes) or 'nenhum'}. "
         f"RAG={rag_method} com {n_chunks} chunks dos PDFs do processo."
