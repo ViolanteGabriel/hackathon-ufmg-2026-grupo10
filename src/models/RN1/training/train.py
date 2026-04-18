@@ -6,7 +6,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-from model import LitigationModel
+from model import LitigationModel, calculate_loss
 from dataset import LitigationDataset
 
 def train_model(epochs=30, batch_size=64, lr=0.001):
@@ -17,7 +17,6 @@ def train_model(epochs=30, batch_size=64, lr=0.001):
         
     print(f"Loading data from {resultados_path} and {subsidios_path}...")
     if not os.path.exists(resultados_path):
-        # Fallback to sentencas.csv if main files are missing
         resultados_path = os.path.join(current_dir, "sentencas.csv")
         if not os.path.exists(resultados_path):
             raise FileNotFoundError(f"Required CSV files not found.")
@@ -26,12 +25,9 @@ def train_model(epochs=30, batch_size=64, lr=0.001):
         df_res = pd.read_csv(resultados_path)
         if os.path.exists(subsidios_path):
             df_sub = pd.read_csv(subsidios_path)
-            # Merge on process number. Note the typo 'processos' in subsidios file
             merge_col_res = 'Número do processo'
             merge_col_sub = 'Número do processos' if 'Número do processos' in df_sub.columns else 'Número do processo'
-            
             df_merged = pd.merge(df_res, df_sub, left_on=merge_col_res, right_on=merge_col_sub, how='left')
-            # Drop the redundant column if name was different
             if merge_col_res != merge_col_sub:
                 df_merged = df_merged.drop(columns=[merge_col_sub])
         else:
@@ -53,10 +49,6 @@ def train_model(epochs=30, batch_size=64, lr=0.001):
     model = LitigationModel(input_dim=input_dim)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
-    # Max value for normalization (to keep loss scales comparable)
-    max_val = dataset.df[dataset.target_value_col].max()
-    if pd.isna(max_val) or max_val == 0: max_val = 1.0
-    
     # Metrics storage
     history = {
         'train_loss': [], 'val_loss': [],
@@ -71,17 +63,13 @@ def train_model(epochs=30, batch_size=64, lr=0.001):
         train_correct = 0
         train_total = 0
         
-        for x, y_class, y_val in train_loader:
+        for x, y_class, _ in train_loader: # Ignore y_val
             optimizer.zero_grad()
             
-            logits, pred_val = model(x)
+            logits = model(x)
             
             # Loss calculation
-            class_loss = torch.nn.functional.cross_entropy(logits, y_class)
-            reg_loss = torch.nn.functional.mse_loss(pred_val.squeeze(), y_val)
-            
-            # Weighted loss
-            loss = 0.5 * class_loss + 0.5 * (reg_loss / (max_val**2 + 1e-6))
+            loss = calculate_loss(logits, y_class)
             
             loss.backward()
             optimizer.step()
@@ -98,11 +86,9 @@ def train_model(epochs=30, batch_size=64, lr=0.001):
         val_correct = 0
         val_total = 0
         with torch.no_grad():
-            for vx, vy_class, vy_val in val_loader:
-                v_logits, v_pred_val = model(vx)
-                v_class_loss = torch.nn.functional.cross_entropy(v_logits, vy_class)
-                v_reg_loss = torch.nn.functional.mse_loss(v_pred_val.squeeze(), vy_val)
-                v_loss = 0.5 * v_class_loss + 0.5 * (v_reg_loss / (max_val**2 + 1e-6))
+            for vx, vy_class, _ in val_loader:
+                v_logits = model(vx)
+                v_loss = calculate_loss(v_logits, vy_class)
                 val_loss += v_loss.item()
                 
                 v_preds = torch.argmax(v_logits, dim=1)
@@ -154,10 +140,8 @@ def train_model(epochs=30, batch_size=64, lr=0.001):
     with torch.no_grad():
         correct_preds = 0
         total = 0
-        for x, y_class, y_val in test_loader:
-            logits, pred_val = model(x)
-            
-            # Binary classification accuracy (0: Vitoria, 1: Perda)
+        for x, y_class, _ in test_loader:
+            logits = model(x)
             preds = torch.argmax(logits, dim=1)
             correct_preds += (preds == y_class).sum().item()
             total += y_class.size(0)
