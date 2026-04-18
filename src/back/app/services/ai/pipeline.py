@@ -347,6 +347,8 @@ def run_pipeline(processo_id: uuid.UUID, db: Session) -> AnaliseIA:
         **case_data,
         "rag_method": retriever.method,
         "rag_n_chunks": len(retriever.chunks),
+        "probabilidade_vitoria_historica": round(1.0 - prob_derrota, 3),
+        "probabilidade_derrota_rn1": round(prob_derrota, 3),
     }
     analise.trechos_chave = _trechos_chave_from_rag(retrieved_by_topic)
     db.add(analise)
