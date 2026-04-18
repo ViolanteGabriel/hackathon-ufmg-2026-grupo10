@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('access_token');
-      localStorage.removeItem('enteros-role');
+      localStorage.removeItem('eanteros-role');
 
       if (window.location.pathname !== '/login') {
         window.location.assign('/login');

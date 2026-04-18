@@ -1,4 +1,4 @@
-"""Ingestão de arquivos XLSX (base de sentenças históricas)."""
+"""Ingestão de arquivos XLSX (base de sentenças judiciais)."""
 from pathlib import Path
 
 import pandas as pd
@@ -29,7 +29,7 @@ _COLUMN_MAP = {
 
 
 def load_sentencas(path: Path) -> pd.DataFrame:
-    """Carrega e normaliza o XLSX de sentenças históricas.
+    """Carrega e normaliza o XLSX de sentenças judiciais.
 
     Retorna DataFrame com colunas canônicas definidas em _COLUMN_MAP.
     """

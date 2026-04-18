@@ -19,7 +19,7 @@ export function SideBar({
 
 
   const userRole = useMemo<UserRole>(() => {
-      const savedRole = window.localStorage.getItem('enteros-role');
+      const savedRole = window.localStorage.getItem('eanteros-role');
       return savedRole === 'Bank Administrator' ? 'Bank Administrator' : 'Lawyer';
   }, []);
 

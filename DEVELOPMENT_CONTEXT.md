@@ -397,14 +397,14 @@ services:
   db:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: enteros
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enteros_dev}
-      POSTGRES_DB: enteros
+      POSTGRES_USER: eanteros
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eanteros_dev}
+      POSTGRES_DB: eanteros
     ports: ["5432:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U enteros"]
+      test: ["CMD-SHELL", "pg_isready -U eanteros"]
       interval: 5s
       retries: 10
 
@@ -442,9 +442,9 @@ volumes:
 OPENAI_API_KEY=sk-...           # fornecido pela banca
 OPENAI_MODEL_REASONING=gpt-4o-mini
 OPENAI_MODEL_EMBEDDING=text-embedding-3-small
-POSTGRES_PASSWORD=enteros_dev
+POSTGRES_PASSWORD=eanteros_dev
 JWT_SECRET=change-me-only-for-demo
-DATABASE_URL=postgresql+psycopg://enteros:enteros_dev@db:5432/enteros
+DATABASE_URL=postgresql+psycopg://eanteros:eanteros_dev@db:5432/eanteros
 LOG_LEVEL=INFO
 ```
 
@@ -452,7 +452,7 @@ LOG_LEVEL=INFO
 
 ## 9. Ingestão Inicial dos Dados da Banca (script único)
 
-Um script `src/back/scripts/seed_sentencas.py` precisa rodar **uma vez** para popular `sentenca_historica` e gerar embeddings das 60k sentenças. Sem isso, o RAG não funciona.
+Um script `src/back/scripts/seed_sentencas.py` precisa rodar **uma vez** para popular `sentenca_judicial` e gerar embeddings das 60k sentenças. Sem isso, o RAG não funciona.
 
 - Usa `text-embedding-3-small` em batches de 100.
 - Custo estimado: ~60k × 50 tokens × $0.02/1M = **<$0.10**. Seguro.

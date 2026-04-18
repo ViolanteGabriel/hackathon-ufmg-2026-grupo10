@@ -24,7 +24,7 @@ O **EanterOS** é um sistema que:
 
 | Requisito | Como é atendido |
 |-----------|----------------|
-| **Regra de decisão** | Pipeline: RN1 (PyTorch, treinada em 60k sentenças históricas) + RAG per-processo + GPT-4o-mini (`llm_classifier`) com Structured Outputs |
+| **Regra de decisão** | Pipeline: RN1 (PyTorch, treinada em 60k sentenças judiciais) + RAG per-processo + GPT-4o-mini (`llm_classifier`) com Structured Outputs |
 | **Sugestão de valor** | Valuator GPT calcula `valor_sugerido`, `intervalo_min/max` e `economia_esperada` com base na `policy.yaml` e nos trechos recuperados pelo RAG |
 | **Acesso à recomendação** | Decision Lab (frontend React) com recomendação, confiança, trechos citados e fatores pró/contra |
 | **Monitoramento de aderência** | Toda decisão do advogado é gravada (aceite/ajuste/recusa), com justificativa obrigatória quando há ajuste significativo e timestamp |
@@ -69,9 +69,9 @@ Edite `.env` e preencha, no mínimo, a chave da OpenAI:
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL_REASONING=gpt-4o-mini
 OPENAI_MODEL_EMBEDDING=text-embedding-3-small
-POSTGRES_PASSWORD=enteros_dev
+POSTGRES_PASSWORD=eanteros_dev
 JWT_SECRET=change-me-only-for-demo
-DATABASE_URL=postgresql+psycopg://enteros:enteros_dev@db:5432/enteros
+DATABASE_URL=postgresql+psycopg://eanteros:eanteros_dev@db:5432/eanteros
 LOG_LEVEL=INFO
 ```
 
@@ -91,12 +91,12 @@ O serviço `back` executa `alembic upgrade head` antes de iniciar o Uvicorn, e o
 | Backend (Swagger) | http://localhost:8000/docs |
 | Backend (ReDoc) | http://localhost:8000/redoc |
 | Healthcheck | http://localhost:8000/health |
-| PostgreSQL | `localhost:5432` (usuário: `enteros`, DB: `enteros`) |
+| PostgreSQL | `localhost:5432` (usuário: `eanteros`, DB: `eanteros`) |
 
 ### 5. (Opcional) Popular dados históricos para demo
 
 ```bash
-# Popula a tabela sentenca_historica a partir do CSV de 60k sentenças
+# Popula a tabela sentenca_judicial a partir do CSV de 60k sentenças
 docker compose exec back python scripts/seed_sentencas.py --csv /data/sentencas.csv
 
 # Popula métricas/decisões de advogados para exibir o dashboard executivo
@@ -127,12 +127,12 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Prepare o banco
-createdb enteros
-psql -d enteros -c "CREATE EXTENSION IF NOT EXISTS vector;"
+createdb eanteros
+psql -d eanteros -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 # Crie o .env local (copie do .env.example na raiz e ajuste a DATABASE_URL)
 cat > .env << EOF
-DATABASE_URL=postgresql+psycopg://seu_usuario:sua_senha@localhost:5432/enteros
+DATABASE_URL=postgresql+psycopg://seu_usuario:sua_senha@localhost:5432/eanteros
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL_REASONING=gpt-4o-mini
 OPENAI_MODEL_EMBEDDING=text-embedding-3-small
@@ -197,7 +197,7 @@ hackathon-ufmg-2026-grupo10/
 │   │   │   │   ├── base.py / session.py
 │   │   │   │   └── models/          # processo, documento, analise_ia,
 │   │   │   │                        # decisao_advogado, proposta_acordo,
-│   │   │   │                        # sentenca_historica
+│   │   │   │                        # sentenca_judicial
 │   │   │   ├── routers/             # auth, processes, analysis, metrics
 │   │   │   ├── schemas/             # Pydantic request/response models
 │   │   │   ├── services/

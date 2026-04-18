@@ -43,7 +43,7 @@ export function LoginScreen() {
       const resolvedRole = resolveUserRole(data.role, role);
 
       saveToken(data.access_token);
-      window.localStorage.setItem('enteros-role', resolvedRole);
+      window.localStorage.setItem('eanteros-role', resolvedRole);
       navigate(resolvedRole === 'Bank Administrator' ? '/monitoring' : '/home');
     } catch {
       setError('Email ou senha inválidos.');
