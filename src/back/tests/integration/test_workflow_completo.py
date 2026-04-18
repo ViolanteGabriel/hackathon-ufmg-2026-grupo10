@@ -318,14 +318,17 @@ class TestIngestionProcesso:
         resp = client.get(f"/processes/{uuid.uuid4()}", headers=_auth(token))
         assert resp.status_code == 404
 
-    def test_pipeline_ia_retorna_501_enquanto_pendente(
+    def test_pipeline_ia_retorna_200_apos_implementacao(
         self, client: TestClient, db: Session
     ) -> None:
-        """[D3] Confirma que o endpoint de análise retorna 501 (DEV-2 pendente).
-        O hook useAnalyzeProcesso() deve tratar este estado com mensagem ao usuário.
+        """[D3] Confirma que o endpoint de análise agora roda o pipeline e retorna 200.
+
+        Antes da implementação da DEV-2 retornava 501. Com o pipeline completo
+        (RN1 + RAG + LLM classifier + valuator), deve retornar 200 com decisão
+        ACORDO/DEFESA persistida, mesmo sem documentos com texto.
         """
         processo = Processo(
-            numero_processo="PROC-501-001",
+            numero_processo="PROC-ANALYZE-001",
             advogado_id="00000000-0000-0000-0000-000000000001",
             status="pendente",
         )
@@ -334,7 +337,10 @@ class TestIngestionProcesso:
 
         token = get_advogado_token(client)
         resp = client.post(f"/processes/{processo.id}/analyze", headers=_auth(token))
-        assert resp.status_code == 501
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["decisao"] in {"ACORDO", "DEFESA"}
+        assert 0.0 <= body["confidence"] <= 1.0
 
     def test_pipeline_preenche_trechos_chave_via_rag(
         self, client: TestClient, db: Session
