@@ -31,6 +31,7 @@ COPY . .
 
 # 5. Instalação final para garantir que o pacote local e scripts sejam registrados
 RUN pip install --no-cache-dir .[dev] && \
+    sed -i 's/\r$//' scripts/init_db.sh && \
     chmod +x scripts/init_db.sh
 
 EXPOSE 8000

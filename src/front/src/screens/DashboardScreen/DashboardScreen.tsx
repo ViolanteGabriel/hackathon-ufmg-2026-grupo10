@@ -21,6 +21,11 @@ function formatBRL(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+function truncateText(value: string, maxLength = 20): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}...`;
+}
+
 interface RingProps { value: number; label: string; color: string; }
 function ConfidenceRing({ value, label, color }: RingProps) {
   const pct = Math.round(value * 100);
@@ -153,7 +158,7 @@ export function DashboardScreen() {
           </h1>
 
           {analysis.requires_supervisor && (
-            <div className="glass-card" style={{ marginTop: 12, padding: '10px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div className="glass-card" style={{ marginTop: 10, padding: '8px 14px', display: 'flex', gap: 8, alignItems: 'center' }}>
               <Icon name="warning" />
               <span style={{ fontSize: '0.85rem' }}>
                 Confiança intermediária — recomenda-se revisão supervisora antes de decidir.
@@ -161,13 +166,13 @@ export function DashboardScreen() {
             </div>
           )}
 
-          <p className="lede dashboard-screen__lede" style={{ marginTop: 14 }}>
+          <p className="lede dashboard-screen__lede" style={{ marginTop: 8 }}>
             {analysis.rationale.split('\n\n')[0]}
           </p>
 
           {/* Valores (ACORDO) */}
           {isAcordo && analysis.proposta ? (
-            <div className="split-grid dashboard-screen__split" style={{ marginTop: 28 }}>
+            <div className="split-grid dashboard-screen__split" style={{ marginTop: 14 }}>
               <div className="metric-card">
                 <div className="metric-label">Proposta de Acordo</div>
                 <h3 className="metric-value" style={{ fontSize: '1.9rem' }}>
@@ -204,7 +209,7 @@ export function DashboardScreen() {
               </div>
             </div>
           ) : !isAcordo ? (
-            <div className="metric-card" style={{ marginTop: 28, display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div className="metric-card" style={{ marginTop: 14, display: 'flex', gap: 16, alignItems: 'center' }}>
               <div>
                 <div className="metric-label">Confiança na defesa</div>
                 <h3 className="metric-value">{confidencePct}%</h3>
@@ -219,7 +224,7 @@ export function DashboardScreen() {
 
           {/* ── Botões HITL ── */}
           {decided ? (
-            <div className="glass-card" style={{ marginTop: 28, padding: '14px 18px', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div className="glass-card" style={{ marginTop: 14, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'center' }}>
               <Icon name="check_circle" />
               <span style={{ fontWeight: 600 }}>Decisão registrada com sucesso.</span>
               <button className="ghost-button" style={{ marginLeft: 'auto' }} onClick={() => navigate('/monitoring')}>
@@ -227,7 +232,7 @@ export function DashboardScreen() {
               </button>
             </div>
           ) : adjusting ? (
-            <div className="glass-card" style={{ marginTop: 28, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="glass-card" style={{ marginTop: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <p className="section-title-strong" style={{ margin: 0 }}>Ajustar proposta</p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 160 }}>
@@ -267,7 +272,7 @@ export function DashboardScreen() {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 10, marginTop: 28, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
               <button
                 className="primary-button"
                 disabled={registerDecision.isPending}
@@ -302,7 +307,7 @@ export function DashboardScreen() {
             <h3 className="section-title">Documentos Analisados</h3>
             <Icon name="filter_list" />
           </div>
-          <div className="doc-list">
+          <div className="doc-list dashboard-screen__doc-list">
             {processo?.documentos.map((doc) => {
               const meta = DOC_TYPE_LABELS[doc.doc_type] ?? DOC_TYPE_LABELS.OUTRO;
               const hasErrors = doc.parse_errors && doc.parse_errors.length > 0;
@@ -312,7 +317,9 @@ export function DashboardScreen() {
                     <div className="doc-icon"><Icon name={meta.icon} /></div>
                     <div>
                       <strong style={{ fontSize: '0.85rem' }}>{meta.label}</strong>
-                      <p className="muted" style={{ fontSize: '0.75rem', margin: 0 }}>{doc.original_filename}</p>
+                      <p className="muted" style={{ fontSize: '0.75rem', margin: 0 }} title={doc.original_filename}>
+                        {truncateText(doc.original_filename, 20)}
+                      </p>
                     </div>
                   </div>
                   <span className={`status-pill ${hasErrors ? 'warning' : 'success'}`}>
@@ -346,7 +353,7 @@ export function DashboardScreen() {
       </div>
 
       {/* ── Fatores de risco / fortalezas ── */}
-      <section className="panel panel-inner dashboard-screen__risk" style={{ marginTop: 24 }}>
+      <section className="panel panel-inner dashboard-screen__risk">
         <div className="section-heading">
           <h3 className="section-title">Fatores da Análise</h3>
           <button type="button" className="ghost-button" onClick={() => navigate('/monitoring')}>
@@ -354,7 +361,7 @@ export function DashboardScreen() {
           </button>
         </div>
 
-        <div className="insight-grid dashboard-screen__rings" style={{ alignItems: 'start', gridTemplateColumns: '1fr 1fr auto' }}>
+        <div className="insight-grid dashboard-screen__rings" style={{ alignItems: 'start' }}>
           {/* Pró-acordo */}
           <div>
             <p className="metric-label" style={{ marginBottom: 10, color: 'var(--primary)' }}>
