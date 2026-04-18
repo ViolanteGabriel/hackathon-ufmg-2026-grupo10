@@ -21,7 +21,7 @@ except ImportError:
 class LitigationPredictor:
     """
     Classe utilitária para gerenciar o carregamento do modelo e inferência.
-    Carrega o dataset de treino para reconstruir os Encoders e Scaler (padrão atual do projeto).
+    Carrega o dataset de treino para reconstruir os Encoders e Scaler.
     """
     def __init__(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -50,7 +50,6 @@ class LitigationPredictor:
         self.model = LitigationModel(input_dim=input_dim)
         
         # Carrega os pesos do modelo
-        # hackathon-ufmg-2026/src/models/RN1/RN1.py -> root/models/litigation_model.pth
         root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
         model_path = os.path.join(root_dir, "models", "litigation_model.pth")
         
@@ -63,7 +62,7 @@ class LitigationPredictor:
         """
         Executa a predição para um dicionário de entrada.
         """
-        # Prepara o vetor de características
+        # Prepara o vetor de características (Assunto não é mais utilizado)
         x_raw = []
         for col in self.dataset.feature_cols:
             val = case_data.get(col, 0.0)
@@ -81,20 +80,17 @@ class LitigationPredictor:
         
         # Inferência
         with torch.no_grad():
-            logits, pred_val = self.model(x_tensor)
+            logits = self.model(x_tensor)
             probs = torch.nn.functional.softmax(logits, dim=1).numpy()[0]
             
         prob_vitoria = float(probs[0])
         prob_perda = float(probs[1])
-        valor_condenacao = float(pred_val.item())
         
         # Resultado legível
         return {
             'probabilidade_vitoria': round(prob_vitoria, 4),
             'probabilidade_perda': round(prob_perda, 4),
-            'resultado_predominante': 'VITORIA' if prob_vitoria > prob_perda else 'PERDA',
-            'valor_estimado_condenacao': round(valor_condenacao, 2),
-            'perda_esperada_ponderada': round(prob_perda * valor_condenacao, 2)
+            'resultado_predominante': 'VITORIA' if prob_vitoria > prob_perda else 'PERDA'
         }
 
 # Singleton para evitar recarregar o dataset/modelo em cada chamada
@@ -103,7 +99,7 @@ _predictor = None
 def predict_litigation(case_data):
     """
     Função principal chamável para rodar o modelo RN1.
-    Recebe um dicionário com os dados do processo e retorna as probabilidades e valores.
+    Recebe um dicionário com os dados do processo e retorna as probabilidades.
     """
     global _predictor
     if _predictor is None:
@@ -114,14 +110,13 @@ if __name__ == "__main__":
     # Exemplo de uso
     test_case = {
         'UF': 'AM',
-        'Assunto': 'Não reconhece operação',
         'Sub-assunto': 'Golpe',
         'Valor da causa': 15000.0,
-        'Contrato': 1.0,
-        'Extrato': 1.0,
+        'Contrato': 0.0,
+        'Extrato': 0.0,
         'Comprovante de crédito': 0.0,
-        'Dossiê': 1.0,
-        'Demonstrativo de evolução da dívida': 1.0,
+        'Dossiê': 0.0,
+        'Demonstrativo de evolução da dívida': 0.0,
         'Laudo referenciado': 0.0
     }
     print(predict_litigation(test_case))
