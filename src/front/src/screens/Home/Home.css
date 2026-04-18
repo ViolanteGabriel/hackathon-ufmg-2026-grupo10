@@ -4,6 +4,33 @@
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
+	height: 100vh;
+	max-height: 100vh;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+}
+
+.home-screen > * {
+	flex: 0 0 auto;
+}
+
+.home-screen::-webkit-scrollbar {
+	width: 10px;
+}
+
+.home-screen::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.home-screen::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+	border-radius: 999px;
+}
+
+.home-screen::-webkit-scrollbar-thumb:hover {
+	background: color-mix(in srgb, var(--text-muted) 56%, transparent);
 }
 
 .home-screen__hero {
@@ -113,6 +140,8 @@
 @media (max-width: 760px) {
 	.home-screen {
 		gap: 16px;
+		height: auto;
+		max-height: none;
 	}
 
 	.home-screen__action-row {
