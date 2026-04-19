@@ -65,19 +65,19 @@ O `setup.sh` faz isso automaticamente. Para configuração manual:
 cp .env.example .env
 ```
 
-Abra `.env` e substitua `sk-...` pela chave real:
+Abra `.env` e substitua `gsk_...` pela chave real:
 
 ```env
-OPENAI_API_KEY=sk-proj-SUA_CHAVE_AQUI
-OPENAI_MODEL_REASONING=gpt-4o-mini
-OPENAI_MODEL_EMBEDDING=text-embedding-3-small
+GROQ_API_KEY=gsk_SUA_CHAVE_AQUI
+GROQ_MODEL=llama-3.3-70b-versatile
+EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2
 POSTGRES_PASSWORD=enteros_dev
 JWT_SECRET=change-me-only-for-demo
 DATABASE_URL=postgresql+psycopg://enteros:enteros_dev@db:5432/enteros
 LOG_LEVEL=INFO
 ```
 
-> A chave da OpenAI foi fornecida pela organização do hackathon. Sem ela, o pipeline de extração de metadados (Estágio 1) e o GPT Acordo (Estágio 4) não funcionarão — o Estágio 2 (RN1) continua funcionando offline.
+> **Groq é gratuito.** Crie sua conta em https://console.groq.com e gere uma API Key (começa com `gsk_`). Sem ela, a classificação LLM e o valuator não funcionarão — o RN1 e o RAG por keyword continuam operacionais.
 
 ---
 
@@ -215,9 +215,9 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 | Variável | Descrição | Default |
 |---|---|---|
-| `OPENAI_API_KEY` | Chave da OpenAI | — (obrigatória) |
-| `OPENAI_MODEL_REASONING` | Modelo para extração e valoração | `gpt-4o-mini` |
-| `OPENAI_MODEL_EMBEDDING` | Modelo de embeddings para RAG | `text-embedding-3-small` |
+| `GROQ_API_KEY` | Chave da Groq (gratuita em console.groq.com) | — (obrigatória para LLM) |
+| `GROQ_MODEL` | Modelo Groq para classificação e valoração | `llama-3.3-70b-versatile` |
+| `EMBEDDING_MODEL` | Modelo sentence-transformers para RAG (local) | `paraphrase-multilingual-MiniLM-L12-v2` |
 | `DATABASE_URL` | URL de conexão PostgreSQL | `postgresql+psycopg://enteros:enteros_dev@db:5432/enteros` |
 | `POSTGRES_PASSWORD` | Senha do banco | `enteros_dev` |
 | `JWT_SECRET` | Chave para assinar tokens JWT | `change-me-only-for-demo` |

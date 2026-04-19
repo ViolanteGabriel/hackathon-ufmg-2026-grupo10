@@ -1,4 +1,4 @@
-"""Serviço de precificação de acordos via OpenAI Structured Outputs com ingestão de documentos."""
+"""Serviço de precificação de acordos via Groq (JSON mode) com ingestão de documentos."""
 
 from __future__ import annotations
 
@@ -6,11 +6,10 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from openai import OpenAI
 from pydantic import BaseModel, Field
 
-from app.config import get_settings
 from app.core.logging import get_logger
+from app.services.ai.client import get_llm_client, get_llm_model
 from app.services.ingestion.pdf import IngestedDocument, ingest_pdf
 
 logger = get_logger(__name__)
@@ -34,7 +33,7 @@ def load_policy() -> dict[str, Any]:
 
 
 def generate_system_prompt(policy: dict[str, Any]) -> str:
-    """Gera o prompt de sistema injetando os valores da política e contexto de documentos."""
+    """Gera o prompt de sistema injetando os valores da política."""
     bounds = policy.get("settlement_bounds", {})
     piso_pct = bounds.get("piso_pct_valor_causa", 0.30)
     teto_pct = bounds.get("teto_pct_valor_causa", 0.70)
@@ -60,7 +59,8 @@ CÁLCULO ESTRATÉGICO:
 SUA TAREFA:
 Analise o texto dos documentos para validar se os "Pontos Fracos" informados são graves o suficiente para subir a proposta ou se há "Pontos Fortes" residuais para manter a proposta no piso.
 
-Retorne estritamente os valores solicitados em formato JSON estruturado.
+Responda SOMENTE com um objeto JSON válido no formato exato:
+{{"valor_sugerido": 5000.00, "intervalo_max": 9000.00, "custo_estimado_litigar": 18000.00, "justificativa": "..."}}
 """
 
 
@@ -89,13 +89,12 @@ class ValuationResult(BaseModel):
 def evaluate_settlement(
     context: ValuationContext, model: str | None = None
 ) -> ValuationResult:
-    """
-    Calcula parâmetros de acordo via LLM, integrando dados e textos dos documentos.
-    """
-    settings = get_settings()
-    client = OpenAI(api_key=settings.openai_api_key)
-    chosen_model = model or settings.openai_model_reasoning
+    """Calcula parâmetros de acordo via LLM, integrando dados e textos dos documentos."""
+    client = get_llm_client()
+    if client is None:
+        raise ValueError("GROQ_API_KEY não configurada — valuator indisponível")
 
+    chosen_model = model or get_llm_model()
     policy = load_policy()
     system_prompt = generate_system_prompt(policy)
 
@@ -110,26 +109,24 @@ def evaluate_settlement(
         f"{context.document_texts}"
     )
 
-    response = client.beta.chat.completions.parse(
+    response = client.chat.completions.create(
         model=chosen_model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": input_data},
         ],
-        response_format=ValuationResult,
+        response_format={"type": "json_object"},
         temperature=0.0,
     )
 
-    result = response.choices[0].message.parsed
-    if result is None:
-        raise ValueError("Falha ao processar a resposta estruturada do Valuator.")
+    content = response.choices[0].message.content or "{}"
+    result = ValuationResult.model_validate_json(content)
 
     logger.info(
-        "GPT Acordo concluído | Sugerido: R$ %.2f | Teto: R$ %.2f",
+        "Valuator concluído | Sugerido: R$ %.2f | Teto: R$ %.2f",
         result.valor_sugerido,
         result.intervalo_max,
     )
-
     return result
 
 
@@ -138,9 +135,7 @@ def evaluate_from_documents(
     base_context: ValuationContext,
     model: str | None = None,
 ) -> ValuationResult:
-    """
-    Consolida textos de documentos injetados e chama o valuator.
-    """
+    """Consolida textos de documentos injetados e chama o valuator."""
     combined_text = "\n\n---\n\n".join(
         f"[Tipo: {doc.doc_type}] Texto:\n{doc.raw_text}" for doc in documents
     )
@@ -151,8 +146,6 @@ def evaluate_from_documents(
 def evaluate_from_pdf_paths(
     paths: list[Path], base_context: ValuationContext, model: str | None = None
 ) -> ValuationResult:
-    """
-    Ingere arquivos PDF de caminhos locais e processa o acordo.
-    """
+    """Ingere arquivos PDF de caminhos locais e processa o acordo."""
     documents = [ingest_pdf(p) for p in paths]
     return evaluate_from_documents(documents, base_context, model=model)

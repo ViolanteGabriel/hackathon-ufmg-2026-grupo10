@@ -1,4 +1,4 @@
-"""Extrator de metadados jurídicos de PDFs via OpenAI Structured Outputs.
+"""Extrator de metadados jurídicos de PDFs via Groq (JSON mode).
 
 Extrai UF, valor da causa e classificação (golpe vs genérico) da petição inicial.
 """
@@ -8,11 +8,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from openai import OpenAI
 from pydantic import BaseModel, Field
 
-from app.config import get_settings
 from app.core.logging import get_logger
+from app.services.ai.client import get_llm_client, get_llm_model
 from app.services.ingestion.pdf import IngestedDocument, ingest_pdf
 
 logger = get_logger(__name__)
@@ -36,7 +35,10 @@ Analise o texto fornecido e extraia:
    - "generico": processo de não reconhecimento sem evidência clara de fraude de terceiro —
      pode ser esquecimento, cobrança indevida, contrato de adesão contestado, etc.
 
-Retorne null para campos que não conseguir identificar com confiança.
+Use null para campos que não conseguir identificar com confiança.
+
+Responda SOMENTE com um objeto JSON válido no formato exato:
+{"uf": "SP", "valor_da_causa": 15000.00, "sub_assunto": "golpe"}
 """
 
 
@@ -54,24 +56,31 @@ class ProcessMetadata(BaseModel):
 
 
 def extract_metadata(text: str, model: str | None = None) -> ProcessMetadata:
-    """Extrai UF, valor da causa e sub-assunto de texto jurídico via OpenAI."""
-    settings = get_settings()
-    client = OpenAI(api_key=settings.openai_api_key)
-    chosen_model = model or settings.openai_model_reasoning
+    """Extrai UF, valor da causa e sub-assunto de texto jurídico via Groq."""
+    client = get_llm_client()
+    if client is None:
+        logger.info("Extractor: sem GROQ_API_KEY — retornando metadados vazios")
+        return ProcessMetadata()
 
+    chosen_model = model or get_llm_model()
     text_truncated = text[:32_000] if len(text) > 32_000 else text
 
-    response = client.beta.chat.completions.parse(
-        model=chosen_model,
-        messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": f"Texto do processo:\n\n{text_truncated}"},
-        ],
-        response_format=ProcessMetadata,
-        temperature=0.1,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=chosen_model,
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": f"Texto do processo:\n\n{text_truncated}"},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.1,
+        )
+        content = response.choices[0].message.content or "{}"
+        result = ProcessMetadata.model_validate_json(content)
+    except Exception as exc:
+        logger.warning("Extractor falhou (%s) — retornando metadados vazios", exc)
+        return ProcessMetadata()
 
-    result: ProcessMetadata = response.choices[0].message.parsed or ProcessMetadata()
     logger.info(
         "Extração concluída — UF=%s | valor_causa=%.2f | sub_assunto=%s",
         result.uf,

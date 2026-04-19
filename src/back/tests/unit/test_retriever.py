@@ -2,7 +2,7 @@
 
 Cobertura:
   - Chunking em janelas com overlap
-  - Fallback "naive" (keyword overlap) quando não há OPENAI_API_KEY
+  - Fallback "naive" (keyword overlap) quando sentence-transformers indisponível
   - Fallback "naive" quando a chamada de embedding falha
   - `lookup_historical_win_rate` com e sem registros
   - `InProcessRetriever.search` devolve top-k com doc_type preservado
@@ -39,10 +39,8 @@ def test_window_chunks_cria_overlap_quando_texto_longo():
     text = " ".join(f"palavra{i}" for i in range(1000))
     chunks = list(_window_chunks(text))
     assert len(chunks) >= 2, "texto longo deve gerar múltiplos chunks"
-    # Overlap: as últimas N palavras do chunk i aparecem no chunk i+1
     first_words = chunks[0].split()[-20:]
     second_chunk_prefix = chunks[1].split()[:50]
-    # Ao menos uma palavra de overlap (implementação usa _CHUNK_OVERLAP=50)
     assert any(w in second_chunk_prefix for w in first_words)
 
 
@@ -52,12 +50,11 @@ def test_window_chunks_texto_vazio_retorna_nada():
 
 
 # ---------------------------------------------------------------------------
-# Retriever (naive fallback)
+# Retriever (naive fallback — sentence-transformers indisponível)
 # ---------------------------------------------------------------------------
 
-@patch("app.services.ai.retriever.get_settings")
-def test_retriever_sem_api_key_usa_naive(mock_settings):
-    mock_settings.return_value.openai_api_key = None
+@patch("app.services.ai.retriever._get_embedder", return_value=None)
+def test_retriever_sem_embedder_usa_naive(_mock):
     docs = [
         _FakeDoc(
             doc_type="PETICAO_INICIAL",
@@ -87,17 +84,15 @@ def test_retriever_sem_api_key_usa_naive(mock_settings):
     assert results[0].chunk.doc_type == "PETICAO_INICIAL"
 
 
-@patch("app.services.ai.retriever.get_settings")
-def test_retriever_sem_documentos_retorna_vazio(mock_settings):
-    mock_settings.return_value.openai_api_key = None
+@patch("app.services.ai.retriever._get_embedder", return_value=None)
+def test_retriever_sem_documentos_retorna_vazio(_mock):
     retriever = InProcessRetriever.from_documents([])
     assert retriever.chunks == []
     assert retriever.search("qualquer coisa") == []
 
 
-@patch("app.services.ai.retriever.get_settings")
-def test_retriever_ignora_docs_sem_raw_text(mock_settings):
-    mock_settings.return_value.openai_api_key = None
+@patch("app.services.ai.retriever._get_embedder", return_value=None)
+def test_retriever_ignora_docs_sem_raw_text(_mock):
     docs = [
         _FakeDoc(doc_type="OUTRO", original_filename="vazio.pdf", raw_text=""),
         _FakeDoc(
@@ -111,13 +106,13 @@ def test_retriever_ignora_docs_sem_raw_text(mock_settings):
 
 
 # ---------------------------------------------------------------------------
-# Fallback em falha de embedding
+# Fallback quando embedding falha durante encode
 # ---------------------------------------------------------------------------
 
-@patch("app.services.ai.retriever.get_settings")
-def test_retriever_embedding_falho_cai_para_naive(mock_settings):
-    mock_settings.return_value.openai_api_key = "sk-fake"
-    mock_settings.return_value.openai_model_embedding = "text-embedding-3-small"
+@patch("app.services.ai.retriever._get_embedder")
+def test_retriever_embedding_falho_cai_para_naive(mock_get_embedder):
+    mock_embedder = mock_get_embedder.return_value
+    mock_embedder.encode.side_effect = RuntimeError("sem rede")
 
     docs = [
         _FakeDoc(
@@ -126,11 +121,7 @@ def test_retriever_embedding_falho_cai_para_naive(mock_settings):
             raw_text="Alegação de golpe e fraude por terceiro desconhecido.",
         )
     ]
-
-    # Simula qualquer erro ao instanciar OpenAI ou chamar embeddings
-    with patch("openai.OpenAI", side_effect=RuntimeError("sem rede")):
-        retriever = InProcessRetriever.from_documents(docs)
-
+    retriever = InProcessRetriever.from_documents(docs)
     assert retriever.method == "naive"
     # Mesmo após falha, search ainda funciona via keyword overlap
     results = retriever.search("golpe fraude", k=1)

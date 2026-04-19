@@ -4,9 +4,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    openai_api_key: str = ""
-    openai_model_reasoning: str = "gpt-4o-mini"
-    openai_model_embedding: str = "text-embedding-3-small"
+    # LLM via Groq (gratuito) — obtenha sua chave em https://console.groq.com
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+
+    # Embeddings locais via sentence-transformers (sem chave de API necessária)
+    embedding_model: str = "paraphrase-multilingual-MiniLM-L12-v2"
 
     postgres_password: str = "enteros_dev"
     database_url: str = "postgresql+psycopg://enteros:enteros_dev@db:5432/enteros"

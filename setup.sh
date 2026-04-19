@@ -104,28 +104,28 @@ else
   fi
 fi
 
-# Verifica se a chave OpenAI está configurada
-OPENAI_KEY=$(grep -E "^OPENAI_API_KEY=" .env | cut -d'=' -f2- | tr -d '"' | tr -d "'" || true)
+# Verifica se a chave Groq está configurada
+GROQ_KEY=$(grep -E "^GROQ_API_KEY=" .env | cut -d'=' -f2- | tr -d '"' | tr -d "'" || true)
 
-if [[ -z "$OPENAI_KEY" || "$OPENAI_KEY" == "sk-..." || "$OPENAI_KEY" =~ ^sk-\.\.\. ]]; then
+if [[ -z "$GROQ_KEY" || "$GROQ_KEY" == "gsk_..." || "$GROQ_KEY" =~ ^gsk_\.\.\. ]]; then
   echo ""
-  warn "OPENAI_API_KEY não está configurada no arquivo .env."
-  echo -n "  → Cole sua chave OpenAI agora (ou pressione ENTER para pular): "
+  warn "GROQ_API_KEY não está configurada no arquivo .env."
+  info "Crie sua conta gratuita em https://console.groq.com e gere uma chave (gsk_...)."
+  echo -n "  → Cole sua chave Groq agora (ou pressione ENTER para pular): "
   read -r user_key
   if [[ -n "$user_key" ]]; then
-    # Substitui ou adiciona a chave
-    if grep -q "^OPENAI_API_KEY=" .env; then
-      sed -i "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${user_key}|" .env
+    if grep -q "^GROQ_API_KEY=" .env; then
+      sed -i "s|^GROQ_API_KEY=.*|GROQ_API_KEY=${user_key}|" .env
     else
-      echo "OPENAI_API_KEY=${user_key}" >> .env
+      echo "GROQ_API_KEY=${user_key}" >> .env
     fi
-    success "OPENAI_API_KEY configurada."
+    success "GROQ_API_KEY configurada."
   else
-    warn "Sem chave OpenAI — extração de metadados e GPT Acordo não funcionarão."
-    warn "O pipeline RN1 (offline) continuará disponível com fallback heurístico."
+    warn "Sem chave Groq — classificação LLM e valuator não funcionarão."
+    warn "O pipeline RN1 (offline) e RAG por keyword continuarão disponíveis."
   fi
 else
-  success "OPENAI_API_KEY detectada no .env."
+  success "GROQ_API_KEY detectada no .env."
 fi
 
 # ── 3. Arquivos críticos do modelo ───────────────────────────────────────────

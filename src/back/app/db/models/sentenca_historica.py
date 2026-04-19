@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
-EMBEDDING_DIM = 1536  # text-embedding-3-small
+EMBEDDING_DIM = 384  # paraphrase-multilingual-MiniLM-L12-v2 (sentence-transformers)
 
 
 class SentencaHistorica(Base):

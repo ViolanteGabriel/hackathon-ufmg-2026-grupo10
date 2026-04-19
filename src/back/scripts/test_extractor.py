@@ -1,7 +1,7 @@
 """Script de teste do extrator — roda sobre os PDFs de data/ sem precisar do banco ou Docker.
 
 Uso:
-    OPENAI_API_KEY=sk-... python scripts/test_extractor.py
+    GROQ_API_KEY=gsk_... python scripts/test_extractor.py
     # ou com .env na raiz do back/:
     python scripts/test_extractor.py
 """
@@ -19,9 +19,9 @@ try:
 except ImportError:
     pass
 
-# Garante que OPENAI_API_KEY está definida
-if not os.environ.get("OPENAI_API_KEY"):
-    print("ERRO: defina OPENAI_API_KEY no ambiente ou em .env")
+# Garante que GROQ_API_KEY está definida
+if not os.environ.get("GROQ_API_KEY"):
+    print("ERRO: defina GROQ_API_KEY no ambiente ou em .env (obtenha em console.groq.com)")
     sys.exit(1)
 
 from app.services.ingestion.pdf import ingest_pdf
@@ -51,7 +51,7 @@ def process_group(label: str, pdf_files: list[Path]) -> None:
         print("  Nenhum documento ingerido com sucesso.")
         return
 
-    print("\nChamando OpenAI para extração de metadados...")
+    print("\nChamando Groq (LLM) para extração de metadados...")
     result: ProcessMetadata = extract_from_documents(docs)
 
     print("\n--- RESULTADO ---")

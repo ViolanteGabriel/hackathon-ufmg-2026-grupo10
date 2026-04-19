@@ -4,7 +4,7 @@ Uso:
     python scripts/seed_sentencas.py --csv /data/sentencas.csv
 
 Idempotente: verifica se já há registros antes de rodar.
-Custo estimado embeddings: ~60k × 50 tokens × $0.02/1M ≈ $0.06
+Embeddings gerados localmente via sentence-transformers (sem custo de API).
 """
 import argparse
 import sys
@@ -22,7 +22,7 @@ from app.services.ingestion.xlsx import load_sentencas  # noqa: E402
 configure_logging()
 logger = get_logger("seed_sentencas")
 
-BATCH_SIZE = 100
+BATCH_SIZE = 256  # sentence-transformers lida bem com batches maiores
 
 
 def _build_embedding_text(row: dict) -> str:
@@ -39,11 +39,13 @@ def _build_embedding_text(row: dict) -> str:
 
 
 def seed(csv_path: Path, force: bool = False) -> None:
-    import openai
     import pandas as pd
+    from sentence_transformers import SentenceTransformer
 
     settings = get_settings()
-    client = openai.OpenAI(api_key=settings.openai_api_key)
+    model_name = settings.embedding_model
+    logger.info("Carregando modelo de embeddings: %s", model_name)
+    embedder = SentenceTransformer(model_name)
 
     # Garante que as tabelas existem
     Base.metadata.create_all(bind=engine)
@@ -51,7 +53,10 @@ def seed(csv_path: Path, force: bool = False) -> None:
     with SessionLocal() as db:
         count = db.query(SentencaHistorica).count()
         if count > 0 and not force:
-            logger.info("sentenca_historica já tem %d registros — pulando seed (use --force para reprocessar)", count)
+            logger.info(
+                "sentenca_historica já tem %d registros — pulando seed (use --force para reprocessar)",
+                count,
+            )
             return
 
         logger.info("Carregando CSV: %s", csv_path)
@@ -69,12 +74,11 @@ def seed(csv_path: Path, force: bool = False) -> None:
             rows_batch.append(row_dict)
 
             if len(texts_batch) == BATCH_SIZE or i == total - 1:
-                # Gera embeddings para o batch
-                resp = client.embeddings.create(
-                    model=settings.openai_model_embedding,
-                    input=texts_batch,
+                embeddings = embedder.encode(
+                    texts_batch,
+                    convert_to_numpy=True,
+                    show_progress_bar=False,
                 )
-                embeddings = [item.embedding for item in resp.data]
 
                 for row_dict, embedding in zip(rows_batch, embeddings):
                     records.append(
@@ -87,7 +91,7 @@ def seed(csv_path: Path, force: bool = False) -> None:
                             resultado_micro=row_dict.get("resultado_micro"),
                             valor_causa=row_dict.get("valor_causa"),
                             valor_condenacao=row_dict.get("valor_condenacao"),
-                            embedding=embedding,
+                            embedding=embedding.tolist(),
                         )
                     )
 

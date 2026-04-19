@@ -1,15 +1,14 @@
-"""Classificador LLM ACORDO vs DEFESA (gpt-4o-mini via Structured Outputs).
+"""Classificador LLM ACORDO vs DEFESA via Groq (JSON mode).
 
-Usa o mesmo modelo `openai_model_reasoning` do extractor e do valuator.
 Recebe metadados + fatores documentais + top-k casos similares e devolve:
   - `decisao`: ACORDO ou DEFESA
   - `confidence`: [0, 1] — confiança do modelo
-  - `rationale`: justificativa curta (<= 400 chars)
+  - `rationale`: justificativa curta (<= 600 chars)
   - `fatores`: lista de fatores extras pró-acordo ou pró-defesa identificados
 
 Comportamento offline:
-  - Sem `OPENAI_API_KEY` ou em falha de chamada, devolve `None`; o pipeline
-    cai no heurístico determinístico `_decisao()`.
+  - Sem `GROQ_API_KEY` ou em falha de chamada, devolve `None`; o pipeline
+    cai no heurístico determinístico baseado no threshold do RN1.
 """
 from __future__ import annotations
 
@@ -17,8 +16,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.config import get_settings
 from app.core.logging import get_logger
+from app.services.ai.client import get_llm_client, get_llm_model
 
 logger = get_logger(__name__)
 
@@ -44,7 +43,8 @@ Regras de negócio:
   5. Sua `confidence` deve refletir a robustez da evidência — menor quando há
      poucos casos similares ou sub_assunto não classificado.
 
-Responda **apenas** no formato estruturado solicitado.
+Responda SOMENTE com um objeto JSON válido no formato exato:
+{"decisao": "ACORDO", "confidence": 0.82, "rationale": "...", "fatores_extra_pro_acordo": [], "fatores_extra_pro_defesa": []}
 """
 
 
@@ -74,7 +74,6 @@ def _format_casos(casos: list[dict[str, Any]]) -> str:
         return "Nenhum caso similar encontrado na base."
     lines = []
     for i, c in enumerate(casos, 1):
-        # Formato agregado (estatísticas por UF/sub_assunto)
         if "n_amostras" in c or "win_rate" in c:
             lines.append(
                 f"{i}. n_amostras={c.get('n_amostras', 0)} "
@@ -83,7 +82,6 @@ def _format_casos(casos: list[dict[str, Any]]) -> str:
                 f"| win_rate={c.get('win_rate', 'N/A')}"
             )
         else:
-            # Formato per-caso
             lines.append(
                 f"{i}. nº={c.get('numero_caso', 'N/A')} | UF={c.get('uf', '?')} "
                 f"| sub_assunto={c.get('sub_assunto', '?')} "
@@ -130,31 +128,26 @@ def _format_user_message(inp: ClassifierInput) -> str:
 
 def classify(inp: ClassifierInput, model: str | None = None) -> ClassifierOutput | None:
     """Classifica a decisão estratégica via LLM. Devolve `None` em falha/sem key."""
-    settings = get_settings()
-    if not settings.openai_api_key:
-        logger.info("Classifier: sem OPENAI_API_KEY — fallback para heurística")
+    client = get_llm_client()
+    if client is None:
+        logger.info("Classifier: sem GROQ_API_KEY — fallback para heurística")
         return None
 
     try:
-        from openai import OpenAI
+        chosen_model = model or get_llm_model()
 
-        client = OpenAI(api_key=settings.openai_api_key)
-        chosen_model = model or settings.openai_model_reasoning
-
-        response = client.beta.chat.completions.parse(
+        response = client.chat.completions.create(
             model=chosen_model,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": _format_user_message(inp)},
             ],
-            response_format=ClassifierOutput,
+            response_format={"type": "json_object"},
             temperature=0.0,
         )
-        parsed = response.choices[0].message.parsed
-        if parsed is None:
-            logger.warning("Classifier: resposta estruturada vazia")
-            return None
-        # Normaliza a decisão para ACORDO/DEFESA mesmo se o modelo variar caixa
+        content = response.choices[0].message.content or "{}"
+        parsed = ClassifierOutput.model_validate_json(content)
+
         parsed.decisao = parsed.decisao.strip().upper()
         if parsed.decisao not in ("ACORDO", "DEFESA"):
             logger.warning(
@@ -162,6 +155,7 @@ def classify(inp: ClassifierInput, model: str | None = None) -> ClassifierOutput
                 parsed.decisao,
             )
             return None
+
         logger.info(
             "Classifier concluído: %s | confidence=%.2f",
             parsed.decisao,

@@ -16,7 +16,7 @@ dependencies = [
     "psycopg[binary]==3.2.*",
     "pgvector==0.3.*",
     "openai==1.54.*",
-    "tiktoken==0.8.*",
+    "sentence-transformers>=2.7.0",
     "pdfplumber==0.11.*",
     "pytesseract==0.3.*",
     "openpyxl==3.1.*",

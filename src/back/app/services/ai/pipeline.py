@@ -202,19 +202,16 @@ def _polish_rationale_llm(
     doc_types: list[str],
     clf_rationale: str | None,
 ) -> str | None:
-    """Gera um rationale polido em português jurídico via GPT.
+    """Gera um rationale polido em português jurídico via Groq.
 
     Retorna None em qualquer falha — caller cai no template determinístico.
     """
     try:
-        from openai import OpenAI
+        from app.services.ai.client import get_llm_client, get_llm_model
 
-        from app.config import get_settings
-
-        settings = get_settings()
-        if not settings.openai_api_key:
+        client = get_llm_client()
+        if client is None:
             return None
-        client = OpenAI(api_key=settings.openai_api_key)
 
         uf = meta.uf or "não identificada"
         sub_key = meta.sub_assunto.value if meta.sub_assunto else "generico"
@@ -253,7 +250,7 @@ def _polish_rationale_llm(
         )
 
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=get_llm_model(),
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},

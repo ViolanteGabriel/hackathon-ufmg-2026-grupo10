@@ -6,15 +6,13 @@ e subsídios daquele processo, não com casos históricos externos.
 Fluxo:
     1. `InProcessRetriever.from_documents(docs)` — particiona cada `Documento`
        em chunks de ~500 tokens (window) com 50 tokens de sobreposição.
-    2. Embedda todos os chunks em 1 chamada de `text-embedding-3-small`.
+    2. Embedda todos os chunks via sentence-transformers (offline, sem API).
     3. `.search(question, k=3)` — embedda a pergunta e devolve os top-k
        chunks por similaridade de cosseno, em memória (NumPy).
 
 Projetado para ser **stateless**: criado a cada `run_pipeline`, descartado ao
-final. Não persiste nada. Sem `OPENAI_API_KEY`, cai para BM25-esque naive
-keyword overlap — mantém o pipeline funcionando em modo offline.
-
-Custo típico por processo (7 PDFs, ~50 chunks): < $0.001.
+final. Não persiste nada. Sem o modelo de embeddings disponível, cai para
+keyword overlap naive — mantém o pipeline funcionando em modo degradado.
 """
 from __future__ import annotations
 
@@ -31,6 +29,24 @@ logger = get_logger(__name__)
 _CHUNK_WORDS = 400  # ≈ 500 tokens
 _CHUNK_OVERLAP = 50
 _MIN_CHUNK_CHARS = 40
+
+# Singleton do modelo de embeddings (carregado uma vez na primeira chamada)
+_embedder = None
+
+
+def _get_embedder():
+    global _embedder
+    if _embedder is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            model_name = get_settings().embedding_model
+            logger.info("Carregando modelo de embeddings: %s", model_name)
+            _embedder = SentenceTransformer(model_name)
+            logger.info("Modelo de embeddings carregado com sucesso")
+        except Exception as exc:
+            logger.warning("Falha ao carregar sentence-transformers (%s) — fallback naive", exc)
+            _embedder = None
+    return _embedder
 
 
 @dataclass
@@ -59,10 +75,7 @@ class InProcessRetriever:
 
     @classmethod
     def from_documents(cls, documents: Sequence[object]) -> InProcessRetriever:
-        """Constrói retriever a partir de uma lista de `Documento` SQLAlchemy.
-
-        Aceita qualquer objeto com `raw_text`, `doc_type`, `original_filename`.
-        """
+        """Constrói retriever a partir de uma lista de `Documento` SQLAlchemy."""
         chunks: list[Chunk] = []
         for doc in documents:
             raw = getattr(doc, "raw_text", None) or ""
@@ -85,33 +98,26 @@ class InProcessRetriever:
         return retriever
 
     def _embed_all(self) -> None:
-        """Popula `.embedding` de cada chunk via OpenAI (1 chamada em batch)."""
+        """Popula `.embedding` de cada chunk via sentence-transformers (batch)."""
         if not self.chunks:
             return
-        settings = get_settings()
-        if not settings.openai_api_key:
-            logger.info(
-                "Retriever: sem OPENAI_API_KEY — usando keyword overlap naive"
-            )
+
+        embedder = _get_embedder()
+        if embedder is None:
+            logger.info("Retriever: modelo de embeddings indisponível — usando keyword overlap naive")
             self._method = "naive"
             return
-        try:
-            from openai import OpenAI
 
-            client = OpenAI(api_key=settings.openai_api_key)
+        try:
             texts = [c.text for c in self.chunks]
-            resp = client.embeddings.create(
-                model=settings.openai_model_embedding,
-                input=texts,
-            )
-            for c, item in zip(self.chunks, resp.data, strict=False):
-                c.embedding = item.embedding
+            embeddings = embedder.encode(texts, convert_to_numpy=True, show_progress_bar=False)
+            for c, emb in zip(self.chunks, embeddings, strict=False):
+                c.embedding = emb.tolist()
             self._method = "embedding"
-            logger.info("Retriever: %d chunks embedados", len(self.chunks))
+            logger.info("Retriever: %d chunks embedados via sentence-transformers", len(self.chunks))
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "Retriever: falha ao gerar embeddings (%s) — fallback naive",
-                exc,
+                "Retriever: falha ao gerar embeddings (%s) — fallback naive", exc
             )
             self._method = "naive"
 
@@ -135,15 +141,12 @@ class InProcessRetriever:
         return scored[:k]
 
     def _embed_question(self, question: str) -> list[float] | None:
+        embedder = _get_embedder()
+        if embedder is None:
+            return None
         try:
-            from openai import OpenAI
-
-            settings = get_settings()
-            client = OpenAI(api_key=settings.openai_api_key)
-            resp = client.embeddings.create(
-                model=settings.openai_model_embedding, input=question
-            )
-            return resp.data[0].embedding
+            emb = embedder.encode(question, convert_to_numpy=True, show_progress_bar=False)
+            return emb.tolist()
         except Exception as exc:  # noqa: BLE001
             logger.warning("Falha ao embeddar pergunta: %s", exc)
             return None
@@ -176,7 +179,6 @@ class InProcessRetriever:
 
 def _window_chunks(text: str) -> Iterable[str]:
     """Particiona texto em janelas de ~400 palavras com overlap de 50."""
-    # Normaliza espaços e quebras
     words = re.split(r"\s+", text.strip())
     if not words:
         return

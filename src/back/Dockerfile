@@ -34,5 +34,8 @@ RUN pip install --no-cache-dir .[dev] && \
     sed -i 's/\r$//' scripts/init_db.sh && \
     chmod +x scripts/init_db.sh
 
+# 6. Pré-download do modelo de embeddings para cache na imagem (~120MB)
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+
 EXPOSE 8000
 ENTRYPOINT ["/bin/bash", "scripts/init_db.sh"]

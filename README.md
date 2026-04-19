@@ -36,7 +36,7 @@ O **EanterOS** e um sistema de apoio a decisao que:
 
 ## Quick Start
 
-**Prerequisitos:** Docker 24+ e Docker Compose v2. Node.js e Python nao sao necessarios no host.
+**Prerequisitos:** Docker 24+ e Docker Compose v2. Node.js e Python nao sao necessarios no host. Chave Groq gratuita em [console.groq.com](https://console.groq.com).
 
 ```bash
 # 1. Clone o repositorio
@@ -202,7 +202,8 @@ hackathon-ufmg-2026-grupo10/
 |--------|-----------|
 | **Frontend** | React 19, TypeScript 5.8, Vite 6, TanStack Query v5, React Router v7, Zod v4 |
 | **Backend** | FastAPI 0.115, SQLAlchemy 2.0, Alembic, Pydantic v2, Python 3.11 |
-| **IA Generativa** | OpenAI GPT-4o-mini (Structured Outputs) + `text-embedding-3-small` |
+| **IA Generativa** | Groq `llama-3.3-70b-versatile` (gratuito, JSON mode) |
+| **Embeddings** | `sentence-transformers` `paraphrase-multilingual-MiniLM-L12-v2` (local, sem API) |
 | **ML** | PyTorch (RN1 — 60k sentencas judiciais), scikit-learn |
 | **Banco de dados** | PostgreSQL 16 + pgvector (busca vetorial para RAG) |
 | **OCR** | Tesseract `por` + pdfplumber |

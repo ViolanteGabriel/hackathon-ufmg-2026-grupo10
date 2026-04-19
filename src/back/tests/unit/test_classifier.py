@@ -1,13 +1,14 @@
 """Unit tests para `app.services.ai.llm_classifier`.
 
 Cobre:
-  - Fallback para None quando não há OPENAI_API_KEY
-  - Resiliência a exceções da SDK OpenAI
+  - Fallback para None quando não há GROQ_API_KEY (get_llm_client retorna None)
+  - Resiliência a exceções da SDK
   - Normalização de caixa (ACORDO/DEFESA)
   - Rejeição de decisão inválida
 """
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -36,68 +37,53 @@ def _mk_input(**overrides) -> ClassifierInput:
     return ClassifierInput(**defaults)
 
 
-@patch("app.services.ai.llm_classifier.get_settings")
-def test_classifier_sem_api_key_retorna_none(mock_settings):
-    mock_settings.return_value.openai_api_key = None
+@patch("app.services.ai.client.get_llm_client", return_value=None)
+def test_classifier_sem_api_key_retorna_none(_mock):
     out = classify(_mk_input())
     assert out is None
 
 
-@patch("app.services.ai.llm_classifier.get_settings")
-def test_classifier_falha_sdk_retorna_none(mock_settings):
-    mock_settings.return_value.openai_api_key = "sk-fake"
-    mock_settings.return_value.openai_model_reasoning = "gpt-4o-mini"
-
-    with patch("openai.OpenAI", side_effect=RuntimeError("rede")):
-        out = classify(_mk_input())
+@patch("app.services.ai.client.get_llm_model", return_value="llama-3.3-70b-versatile")
+@patch("app.services.ai.client.get_llm_client")
+def test_classifier_falha_sdk_retorna_none(mock_client, _mock_model):
+    mock_client.return_value.chat.completions.create.side_effect = RuntimeError("rede")
+    out = classify(_mk_input())
     assert out is None
 
 
-@patch("app.services.ai.llm_classifier.get_settings")
-def test_classifier_normaliza_decisao_lowercase(mock_settings):
-    mock_settings.return_value.openai_api_key = "sk-fake"
-    mock_settings.return_value.openai_model_reasoning = "gpt-4o-mini"
-
-    parsed = ClassifierOutput(
-        decisao="acordo",
-        confidence=0.75,
-        rationale="ok",
-        fatores_extra_pro_acordo=[],
-        fatores_extra_pro_defesa=[],
-    )
-    fake_response = SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(parsed=parsed))]
+def _fake_json_response(data: dict):
+    content = json.dumps(data)
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
     )
 
-    fake_client = MagicMock()
-    fake_client.beta.chat.completions.parse.return_value = fake_response
 
-    with patch("openai.OpenAI", return_value=fake_client):
-        out = classify(_mk_input())
-
+@patch("app.services.ai.client.get_llm_model", return_value="llama-3.3-70b-versatile")
+@patch("app.services.ai.client.get_llm_client")
+def test_classifier_normaliza_decisao_lowercase(mock_client, _mock_model):
+    mock_client.return_value.chat.completions.create.return_value = _fake_json_response({
+        "decisao": "acordo",
+        "confidence": 0.75,
+        "rationale": "ok",
+        "fatores_extra_pro_acordo": [],
+        "fatores_extra_pro_defesa": [],
+    })
+    out = classify(_mk_input())
     assert out is not None
     assert out.decisao == "ACORDO"
 
 
-@patch("app.services.ai.llm_classifier.get_settings")
-def test_classifier_rejeita_decisao_invalida(mock_settings):
-    mock_settings.return_value.openai_api_key = "sk-fake"
-    mock_settings.return_value.openai_model_reasoning = "gpt-4o-mini"
-
-    parsed = ClassifierOutput(
-        decisao="TALVEZ",
-        confidence=0.5,
-        rationale="indecisão",
-    )
-    fake_response = SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(parsed=parsed))]
-    )
-    fake_client = MagicMock()
-    fake_client.beta.chat.completions.parse.return_value = fake_response
-
-    with patch("openai.OpenAI", return_value=fake_client):
-        out = classify(_mk_input())
-
+@patch("app.services.ai.client.get_llm_model", return_value="llama-3.3-70b-versatile")
+@patch("app.services.ai.client.get_llm_client")
+def test_classifier_rejeita_decisao_invalida(mock_client, _mock_model):
+    mock_client.return_value.chat.completions.create.return_value = _fake_json_response({
+        "decisao": "TALVEZ",
+        "confidence": 0.5,
+        "rationale": "indecisão",
+        "fatores_extra_pro_acordo": [],
+        "fatores_extra_pro_defesa": [],
+    })
+    out = classify(_mk_input())
     assert out is None
 
 
