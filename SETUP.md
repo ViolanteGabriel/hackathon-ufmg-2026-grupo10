@@ -12,6 +12,7 @@ O script `setup.sh` verifica pré-requisitos, configura o `.env`, sobe todos os 
 git clone https://github.com/ViolanteGabriel/hackathon-ufmg-2026-grupo10.git
 cd hackathon-ufmg-2026-grupo10
 bash setup.sh
+# O script solicita a OPENAI_API_KEY interativamente se nao estiver configurada
 ```
 
 O script irá:
@@ -51,6 +52,8 @@ Ao final, o script exibe as URLs de acesso e as credenciais de demo.
 git clone https://github.com/ViolanteGabriel/hackathon-ufmg-2026-grupo10.git
 cd hackathon-ufmg-2026-grupo10
 ```
+
+> **Nota:** O repositorio esta em `ViolanteGabriel/hackathon-ufmg-2026-grupo10`. Clone apenas uma vez — o script `setup.sh` cuida do restante.
 
 ---
 
@@ -342,4 +345,4 @@ PostgreSQL 16 + pgvector
 
 ---
 
-> Dúvidas? Abra uma issue no repositório ou consulte o `DEVELOPMENT_CONTEXT.md`.
+> Dúvidas? Abra uma issue no repositório ou consulte o [`docs/DEVELOPMENT_CONTEXT.md`](docs/DEVELOPMENT_CONTEXT.md).

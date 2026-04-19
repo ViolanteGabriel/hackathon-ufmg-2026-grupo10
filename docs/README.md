@@ -1,19 +1,28 @@
-# Documentação e Apresentação
+# Documentacao — EanterOS · Grupo 10
 
-Coloque aqui os artefatos de entrega da sua equipe.
+Artefatos de entrega do Hackathon UFMG 2026.
 
-## Entregáveis esperados
+## Entregaveis
 
-| Arquivo | Descrição |
+| Arquivo | Descricao |
 |---------|-----------|
-| `presentation.*` | Slides ou documento para a apresentação final (PDF, PPTX, etc.) |
-| `demo_video.*` | Link ou arquivo do vídeo demo de até 2 minutos (ou adicione o link no README principal) |
-| `architecture.*` | Diagrama de arquitetura da solução (opcional, mas recomendado) |
+| [`presentation.html`](presentation.html) | Slides da apresentacao final (abra no browser, navegue com setas ← →) |
+| [`relatorio_hackathon.pdf`](relatorio_hackathon.pdf) | Relatorio escrito da solucao |
+| [`policy.md`](policy.md) | Documentacao da politica de acordos (limiares, penalidades, regras) |
+| [`DEVELOPMENT_CONTEXT.md`](DEVELOPMENT_CONTEXT.md) | Contexto tecnico de desenvolvimento (arquitetura, ADRs, decisoes de design) |
+| [`adr/`](adr/) | Architecture Decision Records individuais |
+
+## Video
+
+[youtu.be/to8Uv4QSDXI](https://youtu.be/to8Uv4QSDXI)
 
 ## Checklist de entrega
 
-- [ ] Código-fonte na pasta `src/`
-- [ ] `SETUP.md` preenchido com instruções de execução
-- [ ] Apresentação nesta pasta (`docs/`)
-- [ ] Link do vídeo demo adicionado ao README principal
-- [ ] `.env.example` atualizado com todas as variáveis necessárias
+- [x] Codigo-fonte em `src/`
+- [x] `SETUP.md` com instrucoes completas de execucao
+- [x] Apresentacao em `docs/presentation.html`
+- [x] Video demo linkado no README principal
+- [x] `.env.example` com todas as variaveis necessarias
+- [x] Pipeline de IA funcional (RN1 + RAG + GPT-4o-mini)
+- [x] HITL implementado (aceitar / ajustar / recusar)
+- [x] Dashboard de monitoramento de aderencia e efetividade
